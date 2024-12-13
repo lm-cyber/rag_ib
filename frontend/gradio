@@ -1,0 +1,84 @@
+import gradio as gr
+import requests
+
+# Define the base URL of the FastAPI server
+BASE_URL = "http://localhost:8000"  # Replace with your API's base URL
+
+
+def get_data(query, date_search, source,search_type, top_k):
+    """Function to call the /data endpoint."""
+    url = f"{BASE_URL}/data"
+    params = {
+        "query": query,
+        "date_search": date_search,
+        "source": source,
+        "search_type": search_type,
+        "top_k": top_k,
+
+    }
+    print(params)
+    if len(params['date_search'])==0:
+        params.pop('date_search')
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}
+
+
+def get_date(source):
+    """Function to call the /get_date endpoint."""
+    url = f"{BASE_URL}/get_date"
+    params = {"source": source}
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}
+
+
+# Define the Gradio interface for the /data endpoint
+data_interface = gr.Interface(
+    fn=get_data,
+    inputs=[
+        gr.Textbox(label="Query",
+                   placeholder="Enter your query here"),
+        gr.Textbox(label="Date Search (YYYY-MM-DD or leave empty)",
+                   placeholder="YYYY-MM-DD"),
+        gr.Dropdown(label="Source", choices=[
+                    "lenta", "rbc", "all", "dump"], value="rbc"),
+        
+        gr.Dropdown(label="SearchType", choices=[
+                    "semantic","full_text"], value="full_text"),
+        gr.Number(label="Top K", value=2, precision=0),
+    ],
+    outputs=gr.JSON(label="Response"),
+    title="Get Data",
+    description="Fetch data from the FastAPI /data endpoint."
+)
+
+# Define the Gradio interface for the /get_date endpoint
+date_interface = gr.Interface(
+    fn=get_date,
+    inputs=[
+        gr.Dropdown(label="Source", choices=[
+                    "lenta", "rbc", "all", "dump"], value="rbc"),
+        gr.Dropdown(label="SearchType", choices=[
+                    "semantic","full_text"], value="full_text"),
+    ],
+    outputs=gr.JSON(label="Response"),
+    title="Get Date",
+    description="Fetch date information from the FastAPI /get_date endpoint."
+)
+
+# Combine the interfaces into a single app
+app = gr.TabbedInterface(
+    interface_list=[data_interface, date_interface],
+    tab_names=["Get Data", "Get Date"]
+)
+
+# Launch the Gradio app
+if __name__ == "__main__":
+    app.launch()

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./app
+    container_name: app_service
+    command: poetry run uvicorn app:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./app:/app
+    env_file:
+      - ./app/.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=8000
+    ports:
+      - "8000:8000"
+      - "80:80"
+      - "443:443"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend_service
+    command: poetry run python gradio 
+    volumes:
+      - ./frontend:/frontend
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=7860
+    ports:
+      - "7860:7860"
+
+networks:
+  default:
+    driver: bridge
+
