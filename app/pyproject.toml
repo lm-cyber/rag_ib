@@ -2,7 +2,7 @@
 name = "rag-ib"
 version = "0.1.0"
 description = ""
-authors = [" Nasibullin Alan Maratovich <alan.nasibyllin@yandex.ru>"]
+authors = ["Nasibullin Alan Maratovich <alan.nasibyllin@yandex.ru>", ""]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -20,10 +20,12 @@ openai = "0.28"
 python-dotenv = "^1.0.1"
 feedparser = "^6.0.11"
 httpx = "^0.28.1"
-torch = {version = "^2.5.1+cpu", source = "torch_cpu"}
-torchvision = {version = "^0.20.1+cpu", source = "torch_cpu"}
+torch = { version = "^2.5.1+cpu", source = "torch_cpu" }
+torchvision = { version = "^0.20.1+cpu", source = "torch_cpu" }
 transformers = "^4.47.0"
 numpy = "^2.2.0"
+langchain = "^0.3.12"
+langchain-openai = "^0.2.12"
 
 
 [[tool.poetry.source]]
