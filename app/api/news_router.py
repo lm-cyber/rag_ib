@@ -211,6 +211,29 @@ async def get_rss(source: SOURCE):
     return parsed_entries
 
 
+@router.get("/available_dates", response_model=List[date])
+async def get_available_dates():
+    if not os.path.exists(base_dir):
+        raise HTTPException(status_code=404, detail="Data directory does not exist.")
+
+    files = os.listdir(base_dir)
+    dates_found = []
+
+    for f in files:
+        if f.endswith(".parquet"):
+            date_str = f[:-8]  # remove ".parquet"
+            try:
+                parsed_date = date.fromisoformat(date_str)
+                dates_found.append(parsed_date)
+            except ValueError:
+                pass
+
+    if not dates_found:
+        return []
+
+    return sorted(dates_found)
+
+
 class SearchRequest(BaseModel):
     query: str
     dates: Optional[List[date]] = None
@@ -503,26 +526,3 @@ async def answer_documents(body: SearchAndRerankRequest):
         final_results.append(SearchResult(text=text, link=link))
 
     return {"answer": result, "results": [r.dict() for r in final_results]}
-
-
-@router.get("/available_dates", response_model=List[date])
-async def get_available_dates():
-    if not os.path.exists(base_dir):
-        raise HTTPException(status_code=404, detail="Data directory does not exist.")
-
-    files = os.listdir(base_dir)
-    dates_found = []
-
-    for f in files:
-        if f.endswith(".parquet"):
-            date_str = f[:-8]  # remove ".parquet"
-            try:
-                parsed_date = date.fromisoformat(date_str)
-                dates_found.append(parsed_date)
-            except ValueError:
-                pass
-
-    if not dates_found:
-        return []
-
-    return sorted(dates_found)
