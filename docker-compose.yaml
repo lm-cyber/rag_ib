@@ -5,10 +5,12 @@ services:
     build:
       context: ./app
     container_name: app_service
+    command: python -m uvicorn app:app --host 0.0.0.0 --port 7420 
     volumes:
       - ./app:/opt/app-root/src/app:rw
     environment:
       - PYTHONUNBUFFERED=1
+      - LOWMEM=${LOWMEM}
     ports:
       - "7420:7420"
 
@@ -20,25 +22,25 @@ services:
     volumes:
       - ./data/chroma_data:/chroma/chroma
 
-  app-cron:
-    container_name: app-cron
-    build:
-      context: cron
-      dockerfile: Dockerfile
-    restart: unless-stopped
+  # app-cron:
+  #   container_name: app-cron
+  #   build:
+  #     context: cron
+  #     dockerfile: Dockerfile
+  #   restart: unless-stopped
 
-#  frontend:
-#    build:
-#      context: ./frontend
-#    container_name: frontend_service
-#    command: poetry run python gradio
-#    volumes:
-#      - ./frontend:/frontend
-#    environment:
-#      - PYTHONUNBUFFERED=1
-#      - PORT=7860
-#    ports:
-#      - "7860:7860"
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend_service
+    command: python gradio
+    volumes:
+      - ./frontend:/frontend
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=7860
+    ports:
+      - "7860:7860"
 
 
 networks:

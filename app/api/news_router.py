@@ -6,7 +6,7 @@ from langchain.schema import Document
 from langchain.retrievers.document_compressors import CrossEncoderReranker
 
 
-from api.schema import SearchResult, SearchRequest, SearchAndRerankRequest
+from api.schema import SearchResult, SearchRequest, SearchAndRerankRequest, Answer
 from api.parser import SOURCE
 from api.storages import storage
 from api.models import rerank_model, chain
@@ -101,7 +101,7 @@ async def search_and_rerank_documents(body: SearchAndRerankRequest):
     return final_results
 
 
-@router.post("/answer", response_model=dict)
+@router.post("/answer", response_model=Answer)
 async def answer_documents(body: SearchAndRerankRequest):
     chroma_results = storage.search_chroma_core(
         query=body.query, dates=body.dates, sources=body.sources, n=body.n_big

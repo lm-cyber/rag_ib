@@ -18,7 +18,10 @@ class Storage:
         self.storage_path = f"{os.getcwd()}/app_data/news"
         self.count_changes = 0
         self.max_changes = max_changes
-        self.chroma_client = chromadb.HttpClient(host=host, port=port)
+        try:
+            self.chroma_client = chromadb.HttpClient(host=host, port=port)
+        except: # noqa E722
+            self.chroma_client = chromadb.HttpClient(host="chromadb", port=port)
         self.collection = self.chroma_client.get_or_create_collection(
             "news",
             embedding_function=hf_embeddings_function,

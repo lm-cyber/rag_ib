@@ -7,6 +7,7 @@ from langchain_community.llms import LlamaCpp
 from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
 from langchain.prompts import PromptTemplate
 from huggingface_hub import hf_hub_download
+import os
 
 
 class HFEmbeddingFunction(EmbeddingFunction[Documents]):
@@ -46,10 +47,17 @@ def get_chain():
         template=prompt_template, input_variables=["query", "context"]
     )
     callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
-    model_file = hf_hub_download(
-        repo_id="t-tech/T-lite-it-1.0-Q8_0-GGUF", filename="t-lite-it-1.0-q8_0.gguf"
-    )
-    # model_file = hf_hub_download(repo_id="IlyaGusev/saiga_llama3_8b_gguf", filename="model-q2_K.gguf")
+    low_memory = os.getenv("LOWMEM") == "true"
+    if low_memory:
+        print("Low memory mode\n\n\n\n\n\n\n\n")
+        model_file = hf_hub_download(
+            repo_id="IlyaGusev/saiga_llama3_8b_gguf", filename="model-q2_K.gguf"
+        )
+    else:
+        print("Normal memory mode\n\n\n\n\n\n\n\n")
+        model_file = hf_hub_download(
+            repo_id="t-tech/T-lite-it-1.0-Q8_0-GGUF", filename="t-lite-it-1.0-q8_0.gguf"
+        )
 
     llm = LlamaCpp(
         model_path=model_file,
