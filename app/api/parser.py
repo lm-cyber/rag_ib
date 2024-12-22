@@ -1,6 +1,7 @@
 import feedparser
 from enum import Enum
 
+
 class SOURCE(str, Enum):
     LENTA = "lenta"
     RBC = "rbc"
@@ -24,15 +25,21 @@ def parse_rss(url, source):
     parsed_entries = []
     for entry in feed.entries:
         title = entry.get("title", "")
-        summary = entry.get("summary", "") or entry.get("description", "") or entry.get("value", "")
+        summary = (
+            entry.get("summary", "")
+            or entry.get("description", "")
+            or entry.get("value", "")
+        )
         if summary:
             title = title + " " + summary
-        parsed_entries.append({
-            "text": title,
-            "link": entry.get("link", ""),
-            "published": entry.get("published", ""),
-            "source": source,
-        })
+        parsed_entries.append(
+            {
+                "text": title,
+                "link": entry.get("link", ""),
+                "published": entry.get("published", ""),
+                "source": source,
+            }
+        )
     return parsed_entries
 
 
@@ -42,4 +49,3 @@ def parse_all_sources():
         if s != SOURCE.ALL:
             all_entries.extend(parse_rss(url, s))
     return all_entries
-

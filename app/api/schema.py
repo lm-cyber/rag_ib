@@ -22,7 +22,7 @@ class SearchAndRerankRequest(BaseModel):
     n_big: int = 20
     n_small: int = 5
 
+
 class Answer(BaseModel):
     answer: str
     results: list[SearchResult]
-   

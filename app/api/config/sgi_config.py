@@ -14,7 +14,7 @@ class SGIConfig(BaseSettings):
     WSGI_APP: str = "app:app"
     WORKER_CLASS: str = "uvicorn.workers.UvicornWorker"
 
-    model_config = SettingsConfigDict(env_prefix='SGI_')
+    model_config = SettingsConfigDict(env_prefix="SGI_")
 
 
 sgi_config = SGIConfig()
