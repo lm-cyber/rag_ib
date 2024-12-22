@@ -37,6 +37,20 @@ args = {
 
 def preprocess_text(text):
     text = clean(text, **args)
+ 
+    # зачем тут такой препроцессор, я понимаю еще для b25 , но у моделей свои токинайзеры 
+    # Пример "я 321 :%:?**( русский" -> "321 русск"
+    # а по нормальному  "я 321 :%:?**( русский" -> "я 321 русский"
+
+    # words = word_tokenize(text, language="russian")
+    # words = [word for word in words if word not in stop_words]
+    # doc = nlp(' '.join(words))
+    # lemmatized_words = [token.lemma_ for token in doc]
+    # stemmed_words = [stemmer.stem(word) for word in lemmatized_words]
+    return text#' '.join(stemmed_words)
+
+def preprocess_text_b25(text):
+    text = clean(text, **args)
     words = word_tokenize(text, language="russian")
     words = [word for word in words if word not in stop_words]
     doc = nlp(' '.join(words))

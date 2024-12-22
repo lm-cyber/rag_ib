@@ -7,8 +7,6 @@ services:
     container_name: app_service
     volumes:
       - ./app:/opt/app-root/src/app:rw
-    env_file:
-      - ./app/.env
     environment:
       - PYTHONUNBUFFERED=1
     ports:
