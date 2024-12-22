@@ -1,84 +1,151 @@
 import gradio as gr
 import requests
 
-# Define the base URL of the FastAPI server
-BASE_URL = "http://localhost:8000"  # Replace with your API's base URL
+BASE_URL = "http://app:7420"
 
 
-def get_data(query, date_search, source,search_type, top_k):
-    """Function to call the /data endpoint."""
-    url = f"{BASE_URL}/data"
-    params = {
+def get_rss(source):
+    """Fetch RSS feed from a specific source."""
+    response = requests.get(f"{BASE_URL}/rss/{source}")
+    if response.status_code == 200:
+        return response.json()
+    return {"error": response.text}
+
+
+def get_available_dates():
+    """Fetch available dates for searches."""
+    response = requests.get(f"{BASE_URL}/available_dates")
+    if response.status_code == 200:
+        return response.json()
+    return {"error": response.text}
+
+
+def search_chroma(query, dates, sources, n):
+    """Search documents using Chroma."""
+    payload = {
         "query": query,
-        "date_search": date_search,
-        "source": source,
-        "search_type": search_type,
-        "top_k": top_k,
-
+        "dates": [dates] if dates else None,
+        "sources": [sources] if sources else None,
+        "n": int(n),
     }
-    print(params)
-    if len(params['date_search'])==0:
-        params.pop('date_search')
-    try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
+    response = requests.post(f"{BASE_URL}/search_chroma", json=payload)
+    if response.status_code == 200:
         return response.json()
-    except requests.exceptions.RequestException as e:
-        return {"error": str(e)}
+    return {"error": response.text}
 
 
-def get_date(source):
-    """Function to call the /get_date endpoint."""
-    url = f"{BASE_URL}/get_date"
-    params = {"source": source}
-    try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
+def search_bm25(query, dates, sources, n):
+    """Search documents using BM25."""
+    payload = {
+        "query": query,
+        "dates": [dates] if dates else None,
+        "sources": [sources] if sources else None,
+        "n": int(n),
+    }
+    response = requests.post(f"{BASE_URL}/search_bm_25", json=payload)
+    if response.status_code == 200:
         return response.json()
-    except requests.exceptions.RequestException as e:
-        return {"error": str(e)}
+    return {"error": response.text}
 
 
-# Define the Gradio interface for the /data endpoint
-data_interface = gr.Interface(
-    fn=get_data,
-    inputs=[
-        gr.Textbox(label="Query",
-                   placeholder="Enter your query here"),
-        gr.Textbox(label="Date Search (YYYY-MM-DD or leave empty)",
-                   placeholder="YYYY-MM-DD"),
-        gr.Dropdown(label="Source", choices=[
-                    "lenta", "rbc", "all", "dump"], value="rbc"),
-        
-        gr.Dropdown(label="SearchType", choices=[
-                    "semantic","full_text"], value="full_text"),
-        gr.Number(label="Top K", value=2, precision=0),
-    ],
-    outputs=gr.JSON(label="Response"),
-    title="Get Data",
-    description="Fetch data from the FastAPI /data endpoint."
-)
+def search_and_rerank(query, dates, sources, n_big, n_small):
+    """Search and rerank documents."""
+    payload = {
+        "query": query,
+        "dates": [dates] if dates else None,
+        "sources": [sources] if sources else None,
+        "n_big": int(n_big),
+        "n_small": int(n_small),
+    }
+    response = requests.post(f"{BASE_URL}/search_and_rerank", json=payload)
+    if response.status_code == 200:
+        return response.json()
+    return {"error": response.text}
 
-# Define the Gradio interface for the /get_date endpoint
-date_interface = gr.Interface(
-    fn=get_date,
-    inputs=[
-        gr.Dropdown(label="Source", choices=[
-                    "lenta", "rbc", "all", "dump"], value="rbc"),
-        gr.Dropdown(label="SearchType", choices=[
-                    "semantic","full_text"], value="full_text"),
-    ],
-    outputs=gr.JSON(label="Response"),
-    title="Get Date",
-    description="Fetch date information from the FastAPI /get_date endpoint."
-)
 
-# Combine the interfaces into a single app
-app = gr.TabbedInterface(
-    interface_list=[data_interface, date_interface],
-    tab_names=["Get Data", "Get Date"]
-)
+def answer_documents(query, dates, sources, n_big, n_small):
+    """Answer questions based on documents."""
+    payload = {
+        "query": query,
+        "dates": [dates] if dates else None,
+        "sources": [sources] if sources else None,
+        "n_big": int(n_big),
+        "n_small": int(n_small),
+    }
+    response = requests.post(f"{BASE_URL}/answer", json=payload)
+    if response.status_code == 200:
+        return response.json()
+    return {"error": response.text}
 
-# Launch the Gradio app
-if __name__ == "__main__":
-    app.launch()
+
+with gr.Blocks() as demo:
+    gr.Markdown("# API Frontend for Document Search and Retrieval")
+
+    with gr.Tab("Get RSS"):
+        source = gr.Dropdown(
+            ["lenta", "rbc", "tass", "ria", "vedomosti", "all"], label="Source"
+        )
+        rss_output = gr.JSON()
+        gr.Button("Fetch RSS").click(get_rss, inputs=source, outputs=rss_output)
+
+    with gr.Tab("Get Available Dates"):
+        dates_output = gr.JSON()
+        gr.Button("Fetch Available Dates").click(
+            get_available_dates, outputs=dates_output
+        )
+
+    with gr.Tab("Search Chroma"):
+        query = gr.Textbox("Что случилось в мире?", label="Query")
+        dates = gr.Textbox(label="Dates (comma-separated or leave blank)")
+        sources = gr.Dropdown(
+            ["lenta", "rbc", "tass", "ria", "vedomosti", "all"], label="Source"
+        )
+        n = gr.Slider(1, 100, value=10, label="Number of Results")
+        chroma_output = gr.JSON()
+        gr.Button("Search Chroma").click(
+            search_chroma, inputs=[query, dates, sources, n], outputs=chroma_output
+        )
+
+    with gr.Tab("Search BM25"):
+        query = gr.Textbox("Что случилось в мире?", label="Query")
+        dates = gr.Textbox(label="Dates (comma-separated or leave blank)")
+        sources = gr.Dropdown(
+            ["lenta", "rbc", "tass", "ria", "vedomosti", "all"], label="Source"
+        )
+        n = gr.Slider(1, 100, value=10, label="Number of Results")
+        bm25_output = gr.JSON()
+        gr.Button("Search BM25").click(
+            search_bm25, inputs=[query, dates, sources, n], outputs=bm25_output
+        )
+
+    with gr.Tab("Search and Rerank"):
+        query = gr.Textbox("Что случилось в мире?", label="Query")
+        dates = gr.Textbox(label="Dates (comma-separated or leave blank)")
+        sources = gr.Dropdown(
+            ["lenta", "rbc", "tass", "ria", "vedomosti", "all"], label="Source"
+        )
+        n_big = gr.Slider(1, 100, value=20, label="Number of Big Results")
+        n_small = gr.Slider(1, 50, value=5, label="Number of Small Results")
+        rerank_output = gr.JSON()
+        gr.Button("Search and Rerank").click(
+            search_and_rerank,
+            inputs=[query, dates, sources, n_big, n_small],
+            outputs=rerank_output,
+        )
+
+    with gr.Tab("Answer Documents"):
+        query = gr.Textbox("Что случилось в мире?", label="Query")
+        dates = gr.Textbox(label="Dates (comma-separated or leave blank)")
+        sources = gr.Dropdown(
+            ["lenta", "rbc", "tass", "ria", "vedomosti", "all"], label="Source"
+        )
+        n_big = gr.Slider(1, 100, value=20, label="Number of Big Results")
+        n_small = gr.Slider(1, 50, value=5, label="Number of Small Results")
+        answer_output = gr.JSON()
+        gr.Button("Answer Documents").click(
+            answer_documents,
+            inputs=[query, dates, sources, n_big, n_small],
+            outputs=answer_output,
+        )
+
+demo.launch(server_name="0.0.0.0", server_port=7860)
