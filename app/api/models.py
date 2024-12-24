@@ -65,6 +65,7 @@ def get_chain():
         n_batch=1024,
         callback_manager=callback_manager,
         verbose=True,
+        n_ctx=1024,
     )
 
     llm_chain = LLMChain(llm=llm, prompt=template)
